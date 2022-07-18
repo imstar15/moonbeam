@@ -42,6 +42,17 @@ impl OnNewRound for () {
 	}
 }
 
+use frame_support::pallet_prelude::DispatchResultWithPostInfo;
+pub trait DelegatorActions<AccountId, Balance> {
+	fn delegator_bond_more(
+		delegator: &AccountId,
+		candidate: &AccountId,
+		more: Balance,
+	) -> DispatchResultWithPostInfo;
+	#[cfg(feature = "runtime-benchmarks")]
+	fn setup_delegator(collator: &AccountId, delegator: &AccountId) -> DispatchResultWithPostInfo;
+}
+
 use sp_runtime::traits::Zero;
 pub trait AdditionalIssuance<Balance> {
 	fn additional_issuance() -> Balance;

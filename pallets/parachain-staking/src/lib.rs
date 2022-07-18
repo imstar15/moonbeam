@@ -1273,12 +1273,9 @@ pub mod pallet {
 			more: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
-			ensure!(
-				!Self::delegation_request_revoke_exists(&candidate, &delegator),
-				Error::<T>::PendingDelegationRevoke
-			);
-			let mut state = <DelegatorState<T>>::get(&delegator).ok_or(Error::<T>::DelegatorDNE)?;
-			state.increase_delegation::<T>(candidate.clone(), more)?;
+			<Self as DelegatorActions<T::AccountId, BalanceOf<T>>>::delegator_bond_more(
+				&delegator, &candidate, more,
+			)?;
 			Ok(().into())
 		}
 
@@ -1679,6 +1676,41 @@ pub mod pallet {
 	impl<T: Config> Get<Vec<T::AccountId>> for Pallet<T> {
 		fn get() -> Vec<T::AccountId> {
 			Self::selected_candidates()
+		}
+	}
+
+	impl<T: Config> DelegatorActions<T::AccountId, BalanceOf<T>> for Pallet<T> {
+		fn delegator_bond_more(
+			delegator: &T::AccountId,
+			candidate: &T::AccountId,
+			more: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(
+				!Self::delegation_request_revoke_exists(candidate, delegator),
+				Error::<T>::PendingDelegationRevoke
+			);
+			let mut state = <DelegatorState<T>>::get(delegator).ok_or(Error::<T>::DelegatorDNE)?;
+			state.increase_delegation::<T>(candidate.clone(), more)?;
+			Ok(().into())
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn setup_delegator(
+			collator: &T::AccountId,
+			delegator: &T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			Pallet::<T>::join_candidates(
+				T::Origin::from(Some(collator.clone()).into()),
+				T::MinCandidateStk::get(),
+				<CandidatePool<T>>::get().0.len() as u32,
+			)?;
+			Pallet::<T>::delegate(
+				T::Origin::from(Some(delegator.clone()).into()),
+				collator.clone(),
+				T::MinDelegatorStk::get(),
+				0,
+				0,
+			)
 		}
 	}
 
