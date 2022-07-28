@@ -1,4 +1,4 @@
-import "@polkadot/api-augment";
+import "@moonbeam-network/api-augment";
 
 import { ApiPromise } from "@polkadot/api";
 import {
@@ -276,13 +276,13 @@ export const verifyBlockFees = async (
   expect(fromPreSupply.toBigInt() - toSupply.toBigInt()).to.eq(sumBlockBurnt);
 
   // Log difference in supply, we should be equal to the burnt fees
-  debug(
-    `  supply diff: ${(fromPreSupply.toBigInt() - toSupply.toBigInt())
-      .toString()
-      .padStart(30, " ")}`
-  );
-  debug(`  burnt fees : ${sumBlockBurnt.toString().padStart(30, " ")}`);
-  debug(`  total fees : ${sumBlockFees.toString().padStart(30, " ")}`);
+  // debug(
+  //   `  supply diff: ${(fromPreSupply.toBigInt() - toSupply.toBigInt())
+  //     .toString()
+  //     .padStart(30, " ")}`
+  // );
+  // debug(`  burnt fees : ${sumBlockBurnt.toString().padStart(30, " ")}`);
+  // debug(`  total fees : ${sumBlockFees.toString().padStart(30, " ")}`);
 };
 
 export const verifyLatestBlockFees = async (
@@ -320,3 +320,27 @@ export const getBlockExtrinsic = async (
   );
   return { block, extrinsic, events, resultEvent };
 };
+
+export async function jumpToRound(context: DevTestContext, round: Number): Promise<string | null> {
+  let lastBlockHash = null;
+  while (true) {
+    const currentRound = (
+      await context.polkadotApi.query.parachainStaking.round()
+    ).current.toNumber();
+    if (currentRound === round) {
+      return lastBlockHash;
+    } else if (currentRound > round) {
+      return null;
+    }
+
+    lastBlockHash = (await context.createBlock()).block.hash.toString();
+  }
+}
+
+export async function jumpRounds(context: DevTestContext, count: Number): Promise<string | null> {
+  const round = (await context.polkadotApi.query.parachainStaking.round()).current
+    .addn(count.valueOf())
+    .toNumber();
+
+  return jumpToRound(context, round);
+}

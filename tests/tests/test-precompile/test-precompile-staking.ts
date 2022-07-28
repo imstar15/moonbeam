@@ -127,7 +127,7 @@ describeDevMoonbeamAllEthTxTypes("Staking - Join Candidates", (context) => {
     );
 
     expect(Number((await isCandidate(context, ethan.address)).result)).to.equal(1);
-    await verifyLatestBlockFees(context, MIN_GLMR_STAKING);
+    await verifyLatestBlockFees(context, 0n);
   });
 });
 
@@ -160,7 +160,6 @@ describeDevMoonbeamAllEthTxTypes("Staking - Collator Leaving", (context) => {
 
     const receipt = await context.web3.eth.getTransactionReceipt(result.hash);
     expect(receipt.status).to.equal(true);
-    console.log(receipt);
   });
 });
 
