@@ -40,6 +40,7 @@ use moonbeam_runtime::{
 };
 use nimbus_primitives::NimbusId;
 use pallet_evm::PrecompileSet;
+use pallet_evm_precompile_batch::Action as BatchAction;
 use pallet_evm_precompile_crowdloan_rewards::Action as CrowdloanAction;
 use pallet_evm_precompile_xtokens::Action as XtokensAction;
 use pallet_evm_precompileset_assets_erc20::{
@@ -356,8 +357,8 @@ fn transfer_through_evm_to_stake() {
 					2u32
 				),
 				DispatchError::Module(ModuleError {
-					index: 10,
-					error: [2, 0, 0, 0],
+					index: 20,
+					error: [8, 0, 0, 0],
 					message: Some("InsufficientBalance")
 				})
 			);
@@ -427,18 +428,21 @@ fn reward_block_authors() {
 			}
 			// no rewards doled out yet
 			assert_eq!(
-				Balances::free_balance(AccountId::from(ALICE)),
+				Balances::usable_balance(AccountId::from(ALICE)),
 				100_000 * GLMR,
 			);
-			assert_eq!(Balances::free_balance(AccountId::from(BOB)), 50_000 * GLMR,);
+			assert_eq!(
+				Balances::usable_balance(AccountId::from(BOB)),
+				50_000 * GLMR,
+			);
 			run_to_block(3600, Some(NimbusId::from_slice(&ALICE_NIMBUS).unwrap()));
 			// rewards minted and distributed
 			assert_eq!(
-				Balances::free_balance(AccountId::from(ALICE)),
+				Balances::usable_balance(AccountId::from(ALICE)),
 				111366666658400000000000,
 			);
 			assert_eq!(
-				Balances::free_balance(AccountId::from(BOB)),
+				Balances::usable_balance(AccountId::from(BOB)),
 				54133333329200000000000,
 			);
 		});
@@ -475,24 +479,30 @@ fn reward_block_authors_with_parachain_bond_reserved() {
 			}
 			// no rewards doled out yet
 			assert_eq!(
-				Balances::free_balance(AccountId::from(ALICE)),
+				Balances::usable_balance(AccountId::from(ALICE)),
 				100_000 * GLMR,
 			);
-			assert_eq!(Balances::free_balance(AccountId::from(BOB)), 50_000 * GLMR,);
-			assert_eq!(Balances::free_balance(AccountId::from(CHARLIE)), 100 * GLMR,);
+			assert_eq!(
+				Balances::usable_balance(AccountId::from(BOB)),
+				50_000 * GLMR,
+			);
+			assert_eq!(
+				Balances::usable_balance(AccountId::from(CHARLIE)),
+				100 * GLMR,
+			);
 			run_to_block(3600, Some(NimbusId::from_slice(&ALICE_NIMBUS).unwrap()));
 			// rewards minted and distributed
 			assert_eq!(
-				Balances::free_balance(AccountId::from(ALICE)),
+				Balances::usable_balance(AccountId::from(ALICE)),
 				108269333328165000000000,
 			);
 			assert_eq!(
-				Balances::free_balance(AccountId::from(BOB)),
+				Balances::usable_balance(AccountId::from(BOB)),
 				52584166664082500000000,
 			);
 			// 30% reserved for parachain bond
 			assert_eq!(
-				Balances::free_balance(AccountId::from(CHARLIE)),
+				Balances::usable_balance(AccountId::from(CHARLIE)),
 				4751500000000000000000,
 			);
 		});
@@ -2625,4 +2635,82 @@ fn base_fee_should_default_to_associate_type_value() {
 			(1 * GIGAWEI * SUPPLY_FACTOR).into()
 		);
 	});
+}
+
+#[test]
+fn evm_revert_substrate_events() {
+	ExtBuilder::default()
+		.with_balances(vec![(AccountId::from(ALICE), 100_000 * GLMR)])
+		.build()
+		.execute_with(|| {
+			let batch_precompile_address = H160::from_low_u64_be(2056);
+
+			// Batch a transfer followed by an invalid call to batch.
+			// Thus BatchAll will revert the transfer.
+			assert_ok!(Call::EVM(pallet_evm::Call::call {
+				source: ALICE.into(),
+				target: batch_precompile_address,
+				input: EvmDataWriter::new_with_selector(BatchAction::BatchAll)
+					.write(vec![Address(BOB.into()), Address(batch_precompile_address)])
+					.write(vec![U256::from(1 * GLMR), U256::zero()])
+					.write::<Vec<Bytes>>(vec![])
+					.write::<Vec<U256>>(vec![])
+					.build(),
+				value: U256::zero(), // No value sent in EVM
+				gas_limit: 500_000,
+				max_fee_per_gas: U256::from(100 * GIGAWEI),
+				max_priority_fee_per_gas: None,
+				nonce: Some(U256::from(0)),
+				access_list: Vec::new(),
+			})
+			.dispatch(<Runtime as frame_system::Config>::Origin::root()));
+
+			let transfer_count = System::events()
+				.iter()
+				.filter(|r| match r.event {
+					Event::Balances(pallet_balances::Event::Transfer { .. }) => true,
+					_ => false,
+				})
+				.count();
+
+			assert_eq!(transfer_count, 0, "there should be no transfer event");
+		});
+}
+
+#[test]
+fn evm_success_keeps_substrate_events() {
+	ExtBuilder::default()
+		.with_balances(vec![(AccountId::from(ALICE), 100_000 * GLMR)])
+		.build()
+		.execute_with(|| {
+			let batch_precompile_address = H160::from_low_u64_be(2056);
+
+			assert_ok!(Call::EVM(pallet_evm::Call::call {
+				source: ALICE.into(),
+				target: batch_precompile_address,
+				input: EvmDataWriter::new_with_selector(BatchAction::BatchAll)
+					.write(vec![Address(BOB.into())])
+					.write(vec![U256::from(1 * GLMR)])
+					.write::<Vec<Bytes>>(vec![])
+					.write::<Vec<U256>>(vec![])
+					.build(),
+				value: U256::zero(), // No value sent in EVM
+				gas_limit: 500_000,
+				max_fee_per_gas: U256::from(100 * GIGAWEI),
+				max_priority_fee_per_gas: None,
+				nonce: Some(U256::from(0)),
+				access_list: Vec::new(),
+			})
+			.dispatch(<Runtime as frame_system::Config>::Origin::root()));
+
+			let transfer_count = System::events()
+				.iter()
+				.filter(|r| match r.event {
+					Event::Balances(pallet_balances::Event::Transfer { .. }) => true,
+					_ => false,
+				})
+				.count();
+
+			assert_eq!(transfer_count, 1, "there should be 1 transfer event");
+		});
 }
