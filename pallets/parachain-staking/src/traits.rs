@@ -42,13 +42,20 @@ impl OnNewRound for () {
 	}
 }
 
-use frame_support::pallet_prelude::DispatchResultWithPostInfo;
+use frame_support::{
+	dispatch::DispatchErrorWithPostInfo, pallet_prelude::DispatchResultWithPostInfo,
+};
 pub trait DelegatorActions<AccountId, Balance> {
 	fn delegator_bond_more(
 		delegator: &AccountId,
 		candidate: &AccountId,
 		more: Balance,
 	) -> DispatchResultWithPostInfo;
+	fn delegator_bond_till_minimum(
+		delegator: &AccountId,
+		candidate: &AccountId,
+		minimum: Balance,
+	) -> Result<Balance, DispatchErrorWithPostInfo>;
 	#[cfg(feature = "runtime-benchmarks")]
 	fn setup_delegator(collator: &AccountId, delegator: &AccountId) -> DispatchResultWithPostInfo;
 }
