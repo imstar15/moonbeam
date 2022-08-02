@@ -35,7 +35,7 @@ use crate::{
 	TopDelegations, DELEGATOR_LOCK_ID,
 };
 use frame_support::traits::EstimateNextSessionRotation;
-use frame_support::{assert_noop, assert_ok, traits::ReservableCurrency};
+use frame_support::{assert_noop, assert_ok};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, DispatchError, ModuleError, Perbill, Percent};
 
@@ -8320,78 +8320,6 @@ fn test_hotfix_remove_delegation_requests_exited_candidates_errors_when_candidat
 		});
 }
 
-#[test]
-fn locking_zero_amount_is_ignored() {
-	use frame_support::traits::{LockableCurrency, WithdrawReasons};
-
-	// this test demonstrates the behavior of pallet Balance's `LockableCurrency` implementation of
-	// `set_locks()` when an amount of 0 is provided: it is a no-op
-
-	ExtBuilder::default()
-		.with_balances(vec![(1, 100)])
-		.build()
-		.execute_with(|| {
-			assert_eq!(crate::mock::query_lock_amount(1, DELEGATOR_LOCK_ID), None);
-
-			Balances::set_lock(DELEGATOR_LOCK_ID, &1, 1, WithdrawReasons::all());
-			assert_eq!(
-				crate::mock::query_lock_amount(1, DELEGATOR_LOCK_ID),
-				Some(1)
-			);
-
-			Balances::set_lock(DELEGATOR_LOCK_ID, &1, 0, WithdrawReasons::all());
-			// Note that we tried to call `set_lock(0)` and it ignored it, we still have our lock
-			assert_eq!(
-				crate::mock::query_lock_amount(1, DELEGATOR_LOCK_ID),
-				Some(1)
-			);
-		});
-}
-
-#[test]
-fn revoke_last_removes_lock() {
-	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 100), (3, 100)])
-		.with_candidates(vec![(1, 25), (2, 25)])
-		.with_delegations(vec![(3, 1, 30), (3, 2, 25)])
-		.build()
-		.execute_with(|| {
-			assert_eq!(
-				crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID),
-				Some(55)
-			);
-
-			// schedule and remove one...
-			assert_ok!(ParachainStaking::schedule_revoke_delegation(
-				Origin::signed(3),
-				1
-			));
-			roll_to_round_begin(3);
-			assert_ok!(ParachainStaking::execute_delegation_request(
-				Origin::signed(3),
-				3,
-				1
-			));
-			assert_eq!(
-				crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID),
-				Some(25)
-			);
-
-			// schedule and remove the other...
-			assert_ok!(ParachainStaking::schedule_revoke_delegation(
-				Origin::signed(3),
-				2
-			));
-			roll_to_round_begin(5);
-			assert_ok!(ParachainStaking::execute_delegation_request(
-				Origin::signed(3),
-				3,
-				2
-			));
-			assert_eq!(crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID), None);
-		});
-}
-
 // EventHandler
 
 #[test]
@@ -8508,6 +8436,7 @@ fn estimates_next_session_rotation() {
 			);
 		});
 }
+
 #[test]
 fn locking_zero_amount_is_ignored() {
 	use frame_support::traits::{LockableCurrency, WithdrawReasons};
@@ -8536,6 +8465,7 @@ fn locking_zero_amount_is_ignored() {
 		});
 }
 
+#[test]
 fn revoke_last_removes_lock() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 100), (2, 100), (3, 100)])
@@ -8563,6 +8493,19 @@ fn revoke_last_removes_lock() {
 				crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID),
 				Some(25)
 			);
+
+			// schedule and remove the other...
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(
+				Origin::signed(3),
+				2
+			));
+			roll_to_round_begin(5);
+			assert_ok!(ParachainStaking::execute_delegation_request(
+				Origin::signed(3),
+				3,
+				2
+			));
+			assert_eq!(crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID), None);
 		});
 }
 
