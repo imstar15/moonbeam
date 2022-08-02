@@ -8,13 +8,9 @@ import {
   baltathar,
   BALTATHAR_SESSION_ADDRESS,
   CHARLETH_SESSION_ADDRESS,
-  generateKeyingPair,
+  generateKeyringPair,
 } from "../../util/accounts";
-import {
-  DEFAULT_GENESIS_BALANCE,
-  DEFAULT_GENESIS_MAPPING,
-  DEFAULT_GENESIS_STAKING,
-} from "../../util/constants";
+import { DEFAULT_GENESIS_BALANCE, DEFAULT_GENESIS_MAPPING, GLMR } from "../../util/constants";
 import { describeDevMoonbeam, DevTestContext } from "../../util/setup-dev-tests";
 
 async function getMappingInfo(
@@ -40,10 +36,10 @@ describeDevMoonbeam("Author Mapping - simple association", (context) => {
     expect(await getMappingInfo(context, BALTATHAR_SESSION_ADDRESS)).to.eq(null);
     expect(
       (await context.polkadotApi.query.system.account(alith.address)).data.free.toBigInt()
-    ).to.eq(1207825819614629174706176n);
+    ).to.eq(DEFAULT_GENESIS_BALANCE - DEFAULT_GENESIS_MAPPING);
     expect(
       (await context.polkadotApi.query.system.account(alith.address)).data.reserved.toBigInt()
-    ).to.eq(DEFAULT_GENESIS_MAPPING + DEFAULT_GENESIS_STAKING);
+    ).to.eq(DEFAULT_GENESIS_MAPPING);
   });
 
   it("should succeed in adding an association", async function () {
@@ -59,16 +55,16 @@ describeDevMoonbeam("Author Mapping - simple association", (context) => {
     expect(context.polkadotApi.events.system.NewAccount.is(events[4].event)).to.be.true;
     expect(context.polkadotApi.events.balances.Endowed.is(events[5].event)).to.be.true;
     expect(context.polkadotApi.events.treasury.Deposit.is(events[6].event)).to.be.true;
-    expect(context.polkadotApi.events.system.ExtrinsicSuccess.is(events[7].event)).to.be.true;
+    expect(context.polkadotApi.events.system.ExtrinsicSuccess.is(events[8].event)).to.be.true;
 
     // check association
     expect((await getMappingInfo(context, BALTATHAR_SESSION_ADDRESS)).account).to.eq(alith.address);
     expect(
-      (await context.polkadotApi.query.system.account(alith.address)).data.free.toBigInt()
-    ).to.eq(1207725819590977972705800n);
+      (await context.polkadotApi.query.system.account(alith.address)).data.free.toBigInt() / GLMR
+    ).to.eq((DEFAULT_GENESIS_BALANCE - 2n * DEFAULT_GENESIS_MAPPING) / GLMR);
     expect(
       (await context.polkadotApi.query.system.account(alith.address)).data.reserved.toBigInt()
-    ).to.eq(2n * DEFAULT_GENESIS_MAPPING + DEFAULT_GENESIS_STAKING);
+    ).to.eq(2n * DEFAULT_GENESIS_MAPPING);
   });
 });
 
@@ -87,12 +83,12 @@ describeDevMoonbeam("Author Mapping - Fail to reassociate alice", (context) => {
     expect(context.polkadotApi.events.system.NewAccount.is(events[2].event)).to.be.true;
     expect(context.polkadotApi.events.balances.Endowed.is(events[3].event)).to.be.true;
     expect(context.polkadotApi.events.treasury.Deposit.is(events[4].event)).to.be.true;
-    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[5].event)).to.be.true;
+    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[6].event)).to.be.true;
 
     //check state
     expect(
       (await context.polkadotApi.query.system.account(baltathar.address)).data.free.toBigInt()
-    ).to.eq(1208925819590977972705800n);
+    ).to.eq(1208925819590952822705800n);
     expect(
       (await context.polkadotApi.query.system.account(baltathar.address)).data.reserved.toBigInt()
     ).to.eq(0n);
@@ -122,7 +118,7 @@ describeDevMoonbeam("Author Mapping - Fail to reassociate alice", (context) => {
 
 describeDevMoonbeam("Author Mapping - Fail without deposit", (context) => {
   before("setup association", async function () {
-    const rando = generateKeyingPair();
+    const rando = generateKeyringPair();
     expect(
       (await context.polkadotApi.query.system.account(rando.address)).data.free.toBigInt()
     ).to.eq(0n);
@@ -200,7 +196,7 @@ describeDevMoonbeam("Author Mapping - double registration", (context) => {
       context.polkadotApi.tx.authorMapping.addAssociation(BALTATHAR_SESSION_ADDRESS)
     );
     expect((await getMappingInfo(context, BALTATHAR_SESSION_ADDRESS)).account).to.eq(alith.address);
-    const expectedReservecBalance = 2n * DEFAULT_GENESIS_MAPPING + DEFAULT_GENESIS_STAKING;
+    const expectedReservecBalance = 2n * DEFAULT_GENESIS_MAPPING;
     expect(
       (await context.polkadotApi.query.system.account(alith.address)).data.free.toBigInt()
     ).to.eq(DEFAULT_GENESIS_BALANCE - expectedReservecBalance - fee);
@@ -225,7 +221,7 @@ describeDevMoonbeam("Author Mapping - double registration", (context) => {
     //check that both are registered
     expect((await getMappingInfo(context, CHARLETH_SESSION_ADDRESS)).account).to.eq(alith.address);
     expect((await getMappingInfo(context, BALTATHAR_SESSION_ADDRESS)).account).to.eq(alith.address);
-    const expectedReservecBalance = 3n * DEFAULT_GENESIS_MAPPING + DEFAULT_GENESIS_STAKING;
+    const expectedReservecBalance = 3n * DEFAULT_GENESIS_MAPPING;
     expect(
       (await context.polkadotApi.query.system.account(alith.address)).data.free.toBigInt()
     ).to.eq(genesisAccountBalanceBefore - DEFAULT_GENESIS_MAPPING - fee);
@@ -254,7 +250,7 @@ describeDevMoonbeam("Author Mapping - registered author can clear (de register)"
     expect(context.polkadotApi.events.balances.Unreserved.is(events[1].event)).to.be.true;
     expect(context.polkadotApi.events.authorMapping.KeysRemoved.is(events[2].event)).to.be.true;
     expect(context.polkadotApi.events.treasury.Deposit.is(events[4].event)).to.be.true;
-    expect(context.polkadotApi.events.system.ExtrinsicSuccess.is(events[5].event)).to.be.true;
+    expect(context.polkadotApi.events.system.ExtrinsicSuccess.is(events[6].event)).to.be.true;
 
     // check mapping
     expect(await getMappingInfo(context, BALTATHAR_SESSION_ADDRESS)).to.eq(null);
@@ -274,7 +270,7 @@ describeDevMoonbeam("Author Mapping - unregistered author cannot clear associati
     expect(context.polkadotApi.events.system.NewAccount.is(events[2].event)).to.be.true;
     expect(context.polkadotApi.events.balances.Endowed.is(events[3].event)).to.be.true;
     expect(context.polkadotApi.events.treasury.Deposit.is(events[4].event)).to.be.true;
-    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[5].event)).to.be.true;
+    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[6].event)).to.be.true;
   });
 });
 
@@ -295,7 +291,7 @@ describeDevMoonbeam("Author Mapping - non author clearing", (context) => {
 
     expect(events.length === 4);
     expect(context.polkadotApi.events.treasury.Deposit.is(events[2].event)).to.be.true;
-    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[3].event)).to.be.true;
+    expect(context.polkadotApi.events.system.ExtrinsicFailed.is(events[4].event)).to.be.true;
   });
 });
 

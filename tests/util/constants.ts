@@ -40,8 +40,8 @@ export const BLOCK_TX_LIMIT = GAS_PER_SECOND * 0.5;
 
 // Current implementation is limiting block transactions to 75% of the block gas limit
 export const BLOCK_TX_GAS_LIMIT = BLOCK_TX_LIMIT * 0.75;
-// 85_800_000 Weight per extrinsics
-export const EXTRINSIC_BASE_COST = 85_800_000 / GAS_PER_WEIGHT;
+// 86_298_000 Weight per extrinsics
+export const EXTRINSIC_BASE_COST = Math.ceil(86_298_000 / GAS_PER_WEIGHT);
 
 // Maximum extrinsic weight is taken from the max allowed transaction weight per block,
 // minus the block initialization (10%) and minus the extrinsic base cost.
@@ -61,7 +61,13 @@ export const PRECOMPILE_RELAY_ENCODER_ADDRESS = "0x00000000000000000000000000000
 export const PRECOMPILE_XCM_TRANSACTOR_ADDRESS = "0x0000000000000000000000000000000000000806";
 export const PRECOMPILE_AUTHOR_MAPPING_ADDRESS = "0x0000000000000000000000000000000000000807";
 export const PRECOMPILE_BATCH_ADDRESS = "0x0000000000000000000000000000000000000808";
+export const PRECOMPILE_RANDOMNESS_ADDRESS = "0x0000000000000000000000000000000000000809";
 
 export const MINUTES = 60 / 12;
 export const HOURS = MINUTES * 60;
 export const DAYS = HOURS * 24;
+
+export const CONTRACT_RANDOMNESS_STATUS_DOES_NOT_EXISTS = 0;
+export const CONTRACT_RANDOMNESS_STATUS_PENDING = 1;
+export const CONTRACT_RANDOMNESS_STATUS_READY = 2;
+export const CONTRACT_RANDOMNESS_STATUS_EXPIRED = 3;
