@@ -79,6 +79,7 @@ pub mod pallet {
 		CancelledScheduledRequest, DelegationAction, ScheduledRequest,
 	};
 	use crate::{set::OrderedSet, traits::*, types::*, InflationInfo, Range, WeightInfo};
+	use frame_support::dispatch::DispatchErrorWithPostInfo;
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{
 		tokens::WithdrawReasons, Currency, Get, Imbalance, LockIdentifier, LockableCurrency,
@@ -87,7 +88,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use parity_scale_codec::Decode;
 	use sp_runtime::{
-		traits::{Saturating, Zero},
+		traits::{CheckedSub, Saturating, Zero},
 		Perbill, Percent, Permill,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, prelude::*};
@@ -1270,12 +1271,9 @@ pub mod pallet {
 			more: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
-			ensure!(
-				!Self::delegation_request_revoke_exists(&candidate, &delegator),
-				Error::<T>::PendingDelegationRevoke
-			);
-			let mut state = <DelegatorState<T>>::get(&delegator).ok_or(Error::<T>::DelegatorDNE)?;
-			state.increase_delegation::<T>(candidate.clone(), more)?;
+			<Self as DelegatorActions<T::AccountId, BalanceOf<T>>>::delegator_bond_more(
+				&delegator, &candidate, more,
+			)?;
 			Ok(().into())
 		}
 
@@ -1817,6 +1815,57 @@ pub mod pallet {
 	impl<T: Config> Get<Vec<T::AccountId>> for Pallet<T> {
 		fn get() -> Vec<T::AccountId> {
 			Self::selected_candidates()
+		}
+	}
+
+	impl<T: Config> DelegatorActions<T::AccountId, BalanceOf<T>> for Pallet<T> {
+		fn delegator_bond_more(
+			delegator: &T::AccountId,
+			candidate: &T::AccountId,
+			more: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(
+				!Self::delegation_request_revoke_exists(candidate, delegator),
+				Error::<T>::PendingDelegationRevoke
+			);
+			let mut state = <DelegatorState<T>>::get(delegator).ok_or(Error::<T>::DelegatorDNE)?;
+			state.increase_delegation::<T>(candidate.clone(), more)?;
+			Ok(().into())
+		}
+
+		fn delegator_bond_till_minimum(
+			delegator: &T::AccountId,
+			candidate: &T::AccountId,
+			minimum: BalanceOf<T>,
+		) -> Result<BalanceOf<T>, DispatchErrorWithPostInfo> {
+			Self::get_delegator_stakable_free_balance(delegator)
+				.checked_sub(&minimum)
+				.ok_or(Error::<T>::InsufficientBalance.into())
+				.and_then(|delegation| {
+					<Self as DelegatorActions<T::AccountId, BalanceOf<T>>>::delegator_bond_more(
+						delegator, candidate, delegation,
+					)?;
+					Ok(delegation)
+				})
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn setup_delegator(
+			collator: &T::AccountId,
+			delegator: &T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			Pallet::<T>::join_candidates(
+				T::Origin::from(Some(collator.clone()).into()),
+				T::MinCandidateStk::get(),
+				<CandidatePool<T>>::get().0.len() as u32,
+			)?;
+			Pallet::<T>::delegate(
+				T::Origin::from(Some(delegator.clone()).into()),
+				collator.clone(),
+				T::MinDelegatorStk::get(),
+				0,
+				0,
+			)
 		}
 	}
 
