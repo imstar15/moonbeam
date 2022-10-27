@@ -1,18 +1,22 @@
 import "@moonbeam-network/api-augment";
 
-import { XcmpMessageFormat } from "@polkadot/types/interfaces";
 import { BN, u8aToHex } from "@polkadot/util";
 import { expect } from "chai";
 import { ChaChaRng } from "randchacha";
 
-import { customWeb3Request } from "../../util/providers";
-import { mockHrmpChannelExistanceTx } from "../../util/xcm";
+import {
+  mockHrmpChannelExistanceTx,
+  injectHrmpMessageAndSeal,
+  RawXcmMessage,
+  injectHrmpMessage,
+} from "../../util/xcm";
 
 import { describeDevMoonbeam, DevTestContext } from "../../util/setup-dev-tests";
 
 import type { XcmVersionedXcm, XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 
 import { expectOk } from "../../util/expect";
+import { XcmFragment } from "../../util/xcm";
 
 // enum to mark how xcmp execution went
 enum XcmpExecution {
@@ -109,7 +113,7 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // we want half of numParaMsgs to be executed. That give us how much each message weights
     const weightPerMessage = (totalXcmpWeight * BigInt(2)) / BigInt(numParaMsgs);
 
-    const weightPerXcmInst = 100_000_000n;
+    const weightPerXcmInst = 200_000_000n;
     // Now we need to construct the message. This needs to:
     // - pass barrier (withdraw + clearOrigin*n buyExecution)
     // - fail in buyExecution, so that the previous instruction weights are counted
@@ -120,56 +124,24 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // single messages.
     const clearOriginsPerMessage = (weightPerMessage - weightPerXcmInst) / weightPerXcmInst;
 
-    const instructions = [
-      {
-        WithdrawAsset: [
+    const xcmMessage = new XcmFragment({
+      fees: {
+        multilocation: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
+            parents: 0,
+            interior: {
+              X1: { PalletInstance: balancesPalletIndex },
             },
-            fun: { Fungible: 1 },
           },
         ],
+        fungible: 1n,
       },
-      ...Array(Number(clearOriginsPerMessage)).fill({
-        ClearOrigin: null,
-      }),
-      {
-        BuyExecution: {
-          fees: {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
-            },
-            fun: { Fungible: 1 },
-          },
-          weightLimit: { Limited: new BN(20000000000) },
-        },
-      },
-    ];
-
-    const xcmMessage = {
-      V2: instructions,
-    };
-    const xcmpFormat: XcmpMessageFormat = context.polkadotApi.createType(
-      "XcmpMessageFormat",
-      "ConcatenatedVersionedXcm"
-    ) as any;
-    const receivedMessage: XcmVersionedXcm = context.polkadotApi.createType(
-      "XcmVersionedXcm",
-      xcmMessage
-    ) as any;
-
-    const totalMessage = [...xcmpFormat.toU8a(), ...receivedMessage.toU8a()];
+      weight_limit: new BN(20000000000),
+    })
+      .withdraw_asset()
+      .clear_origin(clearOriginsPerMessage)
+      .buy_execution()
+      .as_v2();
 
     // We want these isntructions to fail in BuyExecution. That means
     // WithdrawAsset needs to work. The only way for this to work
@@ -190,13 +162,16 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // now we start injecting messages
     // one per para
     for (let i = 0; i < numParaMsgs; i++) {
-      await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [i + 1, totalMessage]);
+      await injectHrmpMessage(context, i + 1, {
+        type: "XcmVersionedXcm",
+        payload: xcmMessage,
+      } as RawXcmMessage);
     }
 
     await context.createBlock();
 
     // all the withdraws + clear origins `buyExecution
-    const weightUsePerMessage = (clearOriginsPerMessage + 2n) * 100_000_000n;
+    const weightUsePerMessage = (clearOriginsPerMessage + 2n) * weightPerXcmInst;
 
     const result = await calculateShufflingAndExecution(
       context,
@@ -258,7 +233,7 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // we want half of numParaMsgs to be executed. That give us how much each message weights
     const weightPerMessage = (totalXcmpWeight * BigInt(2)) / BigInt(numParaMsgs);
 
-    const weightPerXcmInst = 100_000_000n;
+    const weightPerXcmInst = 200_000_000n;
     // Now we need to construct the message. This needs to:
     // - pass barrier (withdraw + clearOrigin*n buyExecution)
     // - fail in buyExecution, so that the previous instruction weights are counted
@@ -273,56 +248,24 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // for that reason, we multiply times 2
     const clearOriginsPerMessage = (weightPerMessage - weightPerXcmInst * 2n) / weightPerXcmInst;
 
-    const instructions = [
-      {
-        WithdrawAsset: [
+    const xcmMessage = new XcmFragment({
+      fees: {
+        multilocation: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
+            parents: 0,
+            interior: {
+              X1: { PalletInstance: balancesPalletIndex },
             },
-            fun: { Fungible: 1 },
           },
         ],
+        fungible: 1n,
       },
-      ...Array(Number(clearOriginsPerMessage)).fill({
-        ClearOrigin: null,
-      }),
-      {
-        BuyExecution: {
-          fees: {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
-            },
-            fun: { Fungible: 1 },
-          },
-          weightLimit: { Limited: new BN(20000000000) },
-        },
-      },
-    ];
-
-    let xcmMessage = {
-      V2: instructions,
-    };
-    const xcmpFormat: XcmpMessageFormat = context.polkadotApi.createType(
-      "XcmpMessageFormat",
-      "ConcatenatedVersionedXcm"
-    ) as any;
-    const receivedMessage: XcmVersionedXcm = context.polkadotApi.createType(
-      "XcmVersionedXcm",
-      xcmMessage
-    ) as any;
-
-    const totalMessage = [...xcmpFormat.toU8a(), ...receivedMessage.toU8a()];
+      weight_limit: new BN(20000000000),
+    })
+      .withdraw_asset()
+      .clear_origin(clearOriginsPerMessage)
+      .buy_execution()
+      .as_v2();
 
     // We want these isntructions to fail in BuyExecution. That means
     // WithdrawAsset needs to work. The only way for this to work
@@ -343,13 +286,16 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
     // now we start injecting messages
     // one per para
     for (let i = 0; i < numParaMsgs; i++) {
-      await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [i + 1, totalMessage]);
+      await injectHrmpMessage(context, i + 1, {
+        type: "XcmVersionedXcm",
+        payload: xcmMessage,
+      } as RawXcmMessage);
     }
 
     await context.createBlock();
 
     // all the withdraws + clear origins `buyExecution
-    const weightUsePerMessage = (clearOriginsPerMessage + 2n) * 100_000_000n;
+    const weightUsePerMessage = (clearOriginsPerMessage + 2n) * weightPerXcmInst;
 
     // in this case, we have some that will execute on_initialize
     // some that will fail the execution
@@ -403,96 +349,41 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
       (pallet) => pallet.name === "Balances"
     ).index;
 
-    const instructionsNotExecuted = [
-      {
-        WithdrawAsset: [
+    const xcmMessageNotExecuted = new XcmFragment({
+      fees: {
+        multilocation: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
+            parents: 0,
+            interior: {
+              X1: { PalletInstance: balancesPalletIndex },
             },
-            fun: { Fungible: 1 },
           },
         ],
+        fungible: 1n,
       },
-      {
-        BuyExecution: {
-          fees: {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
-            },
-            fun: { Fungible: 1 },
-          },
-          weightLimit: { Limited: new BN(20000000000) },
-        },
-      },
-    ];
+      weight_limit: new BN(20000000000),
+    })
+      .withdraw_asset()
+      .buy_execution()
+      .as_v2();
 
-    const instructionsExecuted = [
-      {
-        WithdrawAsset: [
+    const xcmMessageExecuted = new XcmFragment({
+      fees: {
+        multilocation: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
+            parents: 0,
+            interior: {
+              X1: { PalletInstance: balancesPalletIndex },
             },
-            fun: { Fungible: 2 },
           },
         ],
+        fungible: 2n,
       },
-      {
-        BuyExecution: {
-          fees: {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
-            },
-            fun: { Fungible: 2 },
-          },
-          weightLimit: { Limited: new BN(20000000000) },
-        },
-      },
-    ];
-
-    const xcmMessageNotExecuted = {
-      V2: instructionsNotExecuted,
-    };
-    const xcmMessageExecuted = {
-      V2: instructionsExecuted,
-    };
-    const xcmpFormat: XcmpMessageFormat = context.polkadotApi.createType(
-      "XcmpMessageFormat",
-      "ConcatenatedVersionedXcm"
-    ) as any;
-    const receivedMessageNotExecuted: XcmVersionedXcm = context.polkadotApi.createType(
-      "XcmVersionedXcm",
-      xcmMessageNotExecuted
-    ) as any;
-
-    const receivedMessageExecuted: XcmVersionedXcm = context.polkadotApi.createType(
-      "XcmVersionedXcm",
-      xcmMessageExecuted
-    ) as any;
-
-    const totalMessageNotExecuted = [...xcmpFormat.toU8a(), ...receivedMessageNotExecuted.toU8a()];
-    const totalMessageExecuted = [...xcmpFormat.toU8a(), ...receivedMessageExecuted.toU8a()];
+      weight_limit: new BN(20000000000),
+    })
+      .withdraw_asset()
+      .buy_execution()
+      .as_v2();
 
     const paraId = context.polkadotApi.createType("ParaId", 1) as any;
     const sovereignAddress = u8aToHex(
@@ -506,8 +397,15 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
 
     // now we start injecting messages
     // two for para 1
-    await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [1, totalMessageNotExecuted]);
-    await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [1, totalMessageExecuted]);
+    await injectHrmpMessage(context, 1, {
+      type: "XcmVersionedXcm",
+      payload: xcmMessageNotExecuted,
+    } as RawXcmMessage);
+
+    await injectHrmpMessage(context, 1, {
+      type: "XcmVersionedXcm",
+      payload: xcmMessageExecuted,
+    } as RawXcmMessage);
 
     await context.createBlock();
 
@@ -524,54 +422,23 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
       (pallet) => pallet.name === "Balances"
     ).index;
 
-    const instructionsNotExecuted = [
-      {
-        WithdrawAsset: [
+    const xcmMessageNotExecuted = new XcmFragment({
+      fees: {
+        multilocation: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
+            parents: 0,
+            interior: {
+              X1: { PalletInstance: balancesPalletIndex },
             },
-            fun: { Fungible: 1 },
           },
         ],
+        fungible: 1n,
       },
-      {
-        BuyExecution: {
-          fees: {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: {
-                  X1: { PalletInstance: balancesPalletIndex },
-                },
-              },
-            },
-            fun: { Fungible: 1 },
-          },
-          weightLimit: { Limited: new BN(20000000000) },
-        },
-      },
-    ];
-
-    const xcmMessageNotExecuted = {
-      V2: instructionsNotExecuted,
-    };
-
-    const xcmpFormat: XcmpMessageFormat = context.polkadotApi.createType(
-      "XcmpMessageFormat",
-      "ConcatenatedVersionedXcm"
-    ) as any;
-    const receivedMessageNotExecuted: XcmVersionedXcm = context.polkadotApi.createType(
-      "XcmVersionedXcm",
-      xcmMessageNotExecuted
-    ) as any;
-
-    const totalMessageNotExecuted = [...xcmpFormat.toU8a(), ...receivedMessageNotExecuted.toU8a()];
+      weight_limit: new BN(20000000000),
+    })
+      .withdraw_asset()
+      .buy_execution()
+      .as_v2();
 
     const paraId = context.polkadotApi.createType("ParaId", 1) as any;
     const sovereignAddress = u8aToHex(
@@ -589,7 +456,10 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
 
     // now we start injecting messages
     for (let i = 0; i < suspendThreshold + 1; i++) {
-      await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [1, totalMessageNotExecuted]);
+      await injectHrmpMessage(context, 1, {
+        type: "XcmVersionedXcm",
+        payload: xcmMessageNotExecuted,
+      } as RawXcmMessage);
     }
 
     const result = await context.createBlock().catch((e) => e);
@@ -607,19 +477,12 @@ describeDevMoonbeam("Mock XCMP - test XCMP execution", (context) => {
 describeDevMoonbeam("Mock XCM - receive horizontal suspend", (context) => {
   const suspendedPara = 2023;
   before("Should receive a suspend channel", async function () {
-    // We first simulate a reception for suspending a channel from parachain 1
-    const xcmpFormat: XcmpMessageFormat = context.polkadotApi.createType(
-      "XcmpMessageFormat",
-      "Signals"
-    ) as any;
-    const receivedMessage = context.polkadotApi.createType("u8", 0) as any;
-    const totalMessage = [...xcmpFormat.toU8a(), ...receivedMessage.toU8a()];
-    // Send RPC call to inject XCM message
-    // We will set a specific message knowing that it should mint the statemint asset
-    await customWeb3Request(context.web3, "xcm_injectHrmpMessage", [suspendedPara, totalMessage]);
-
-    // Create a block in which the XCM will be executed
-    await context.createBlock();
+    // Send an XCM and create block to execute it
+    await injectHrmpMessageAndSeal(context, suspendedPara, {
+      type: "u8",
+      payload: 0,
+      format: "Signals",
+    } as RawXcmMessage);
 
     // assert channel with para 2023 is suspended
     const status = await context.polkadotApi.query.xcmpQueue.outboundXcmpStatus();
