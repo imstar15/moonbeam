@@ -8381,7 +8381,7 @@ fn should_end_session_ties_sessions_to_rounds() {
 		.execute_with(|| {
 			let mut block = 1;
 			assert!(!ParachainStaking::should_end_session(block));
-			block = DefaultBlocksPerRound::get() as u64;
+			block = DefaultBlocksPerRound::get();
 			assert!(ParachainStaking::should_end_session(block));
 		});
 }
@@ -8395,7 +8395,7 @@ fn average_session_length_is_round_length() {
 		.with_candidates(vec![])
 		.build()
 		.execute_with(|| {
-			let round_length = DefaultBlocksPerRound::get() as u64;
+			let round_length = DefaultBlocksPerRound::get();
 			assert_eq!(round_length, ParachainStaking::average_session_length());
 		});
 }
@@ -8407,7 +8407,7 @@ fn estimates_current_session_progress() {
 		.with_candidates(vec![])
 		.build()
 		.execute_with(|| {
-			let round_length = DefaultBlocksPerRound::get() as u64;
+			let round_length = DefaultBlocksPerRound::get();
 			let block = 2;
 			roll_to(2);
 			assert_eq!(
@@ -8427,7 +8427,7 @@ fn estimates_next_session_rotation() {
 		.build()
 		.execute_with(|| {
 			roll_to_round_begin(1);
-			let round_length = DefaultBlocksPerRound::get() as u64;
+			let round_length = DefaultBlocksPerRound::get();
 			assert_eq!(
 				round_length,
 				ParachainStaking::estimate_next_session_rotation(1)

@@ -452,9 +452,6 @@ pub mod pallet {
 			);
 			weight
 		}
-		fn on_finalize(_n: T::BlockNumber) {
-			Self::award_points_to_block_author();
-		}
 	}
 
 	#[pallet::storage]
