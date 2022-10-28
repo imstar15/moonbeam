@@ -15,7 +15,7 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use {
-	core::assert_matches::assert_matches,
+	crate::{EvmData, EvmDataWriter},
 	fp_evm::{
 		Context, ExitError, ExitReason, ExitSucceed, Log, PrecompileFailure, PrecompileHandle,
 		PrecompileOutput, PrecompileResult, PrecompileSet, Transfer,
@@ -184,6 +184,7 @@ pub struct PrecompilesTester<'p, P> {
 
 	expected_cost: Option<u64>,
 	expected_logs: Option<Vec<PrettyLog>>,
+	static_call: bool,
 }
 
 impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
@@ -214,6 +215,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 
 			expected_cost: None,
 			expected_logs: None,
+			static_call: false,
 		}
 	}
 
@@ -229,6 +231,11 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 
 	pub fn with_target_gas(mut self, target_gas: Option<u64>) -> Self {
 		self.target_gas = target_gas;
+		self
+	}
+
+	pub fn with_static_call(mut self, static_call: bool) -> Self {
+		self.static_call = static_call;
 		self
 	}
 
@@ -264,19 +271,13 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	fn execute(&mut self) -> Option<PrecompileResult> {
 		let handle = &mut self.handle;
 		handle.subcall_handle = self.subcall_handle.take();
+		handle.is_static = self.static_call;
 
 		if let Some(gas_limit) = self.target_gas {
 			handle.gas_limit = gas_limit;
 		}
 
-		let res = self.precompiles.execute(
-			handle,
-			// self.to,
-			// &self.data,
-			// self.target_gas,
-			// &self.context,
-			// self.is_static,
-		);
+		let res = self.precompiles.execute(handle);
 
 		self.subcall_handle = handle.subcall_handle.take();
 
@@ -313,25 +314,70 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	/// Execute the precompile set and check it returns provided output.
 	pub fn execute_returns(mut self, output: Vec<u8>) {
 		let res = self.execute();
-		assert_eq!(
-			res,
+
+		match res {
+			Some(Err(PrecompileFailure::Revert { output, .. })) => {
+				let decoded = Self::decode_revert_message(&output);
+				eprintln!(
+					"Revert message (bytes): {:?}",
+					sp_core::hexdisplay::HexDisplay::from(&decoded)
+				);
+				eprintln!(
+					"Revert message (string): {:?}",
+					core::str::from_utf8(decoded).ok()
+				);
+				panic!("Shouldn't have reverted");
+			}
 			Some(Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
-				output
-			}))
-		);
+				output: execution_output,
+			})) => {
+				if execution_output != output {
+					eprintln!(
+						"Output (bytes): {:?}",
+						sp_core::hexdisplay::HexDisplay::from(&execution_output)
+					);
+					eprintln!(
+						"Output (string): {:?}",
+						core::str::from_utf8(&execution_output).ok()
+					);
+					panic!("Output doesn't match");
+				}
+			}
+			other => panic!("Unexpected result: {:?}", other),
+		}
+
 		self.assert_optionals();
+	}
+
+	/// Execute the precompile set and check it returns provided Solidity encoded output.
+	pub fn execute_returns_encoded(self, output: impl EvmData) {
+		self.execute_returns(EvmDataWriter::new().write(output).build())
 	}
 
 	/// Execute the precompile set and check if it reverts.
 	/// Take a closure allowing to perform custom matching on the output.
 	pub fn execute_reverts(mut self, check: impl Fn(&[u8]) -> bool) {
 		let res = self.execute();
-		assert_matches!(
-			res,
-			Some(Err(PrecompileFailure::Revert { output, ..}))
-				if check(Self::decode_revert_message(&output))
-		);
+
+		match res {
+			Some(Err(PrecompileFailure::Revert { output, .. })) => {
+				let decoded = Self::decode_revert_message(&output);
+				if !check(decoded) {
+					eprintln!(
+						"Revert message (bytes): {:?}",
+						sp_core::hexdisplay::HexDisplay::from(&decoded)
+					);
+					eprintln!(
+						"Revert message (string): {:?}",
+						core::str::from_utf8(decoded).ok()
+					);
+					panic!("Revert reason doesn't match !");
+				}
+			}
+			other => panic!("Didn't revert, instead returned {:?}", other),
+		}
+
 		self.assert_optionals();
 	}
 
@@ -351,7 +397,7 @@ pub trait PrecompileTesterExt: PrecompileSet + Sized {
 		&self,
 		from: impl Into<H160>,
 		to: impl Into<H160>,
-		data: Vec<u8>,
+		data: impl Into<Vec<u8>>,
 	) -> PrecompilesTester<Self>;
 }
 
@@ -360,9 +406,9 @@ impl<T: PrecompileSet> PrecompileTesterExt for T {
 		&self,
 		from: impl Into<H160>,
 		to: impl Into<H160>,
-		data: Vec<u8>,
+		data: impl Into<Vec<u8>>,
 	) -> PrecompilesTester<Self> {
-		PrecompilesTester::new(self, from, to, data)
+		PrecompilesTester::new(self, from, to, data.into())
 	}
 }
 
@@ -388,4 +434,38 @@ impl core::fmt::Debug for PrettyLog {
 			.field("data_utf8", &message)
 			.finish()
 	}
+}
+
+/// Panics if an event is not found in the system log of events
+#[macro_export]
+macro_rules! assert_event_emitted {
+	($event:expr) => {
+		match &$event {
+			e => {
+				assert!(
+					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					"Event {:?} was not found in events: \n {:?}",
+					e,
+					crate::mock::events()
+				);
+			}
+		}
+	};
+}
+
+// Panics if an event is found in the system log of events
+#[macro_export]
+macro_rules! assert_event_not_emitted {
+	($event:expr) => {
+		match &$event {
+			e => {
+				assert!(
+					crate::mock::events().iter().find(|x| *x == e).is_none(),
+					"Event {:?} was found in events: \n {:?}",
+					e,
+					crate::mock::events()
+				);
+			}
+		}
+	};
 }

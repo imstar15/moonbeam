@@ -18,13 +18,12 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Pallet, Range,
-	ScheduledRequest,
+	AwardedPts, BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Pallet,
+	Points, Range, Round, ScheduledRequest,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec};
-use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
+use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize};
 use frame_system::RawOrigin;
-use pallet_authorship::EventHandler;
 use sp_runtime::{Perbill, Percent};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -102,6 +101,14 @@ fn create_funded_collator<T: Config>(
 	Ok(user)
 }
 
+// Simulate staking on finalize by manually setting points
+fn parachain_staking_on_finalize<T: Config>(author: T::AccountId) {
+	let now = <Round<T>>::get().current;
+	let score_plus_20 = <AwardedPts<T>>::get(now, &author).saturating_add(20);
+	<AwardedPts<T>>::insert(now, author, score_plus_20);
+	<Points<T>>::mutate(now, |x| *x = x.saturating_add(20));
+}
+
 /// Run to end block and author
 fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 	let total_rounds = round_delay + 1u32;
@@ -109,7 +116,7 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 	let mut now = <frame_system::Pallet<T>>::block_number() + 1u32.into();
 	let end = Pallet::<T>::round().first + (round_length * total_rounds.into());
 	while now < end {
-		Pallet::<T>::note_author(author.clone());
+		parachain_staking_on_finalize::<T>(author.clone());
 		<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 		<frame_system::Pallet<T>>::set_block_number(
 			<frame_system::Pallet<T>>::block_number() + 1u32.into(),
@@ -363,7 +370,10 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), more)
 	verify {
 		let expected_bond = more * 2u32.into();
-		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
+		assert_eq!(
+			Pallet::<T>::candidate_info(&caller).expect("candidate was created, qed").bond,
+			expected_bond,
+		);
 	}
 
 	schedule_candidate_bond_less {
@@ -407,7 +417,10 @@ benchmarks! {
 			caller.clone()
 		)?;
 	} verify {
-		assert_eq!(T::Currency::reserved_balance(&caller), min_candidate_stk);
+		assert_eq!(
+			Pallet::<T>::candidate_info(&caller).expect("candidate was created, qed").bond,
+			min_candidate_stk,
+		);
 	}
 
 	cancel_candidate_bond_less {
@@ -638,7 +651,10 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond)
 	verify {
 		let expected_bond = bond * 2u32.into();
-		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
+		assert_eq!(
+			Pallet::<T>::delegator_state(&caller).expect("candidate was created, qed").total,
+			expected_bond,
+		);
 	}
 
 	schedule_delegator_bond_less {
@@ -737,7 +753,10 @@ benchmarks! {
 		)?;
 	} verify {
 		let expected = total - bond_less;
-		assert_eq!(T::Currency::reserved_balance(&caller), expected);
+		assert_eq!(
+			Pallet::<T>::delegator_state(&caller).expect("candidate was created, qed").total,
+			expected,
+		);
 	}
 
 	cancel_revoke_delegation {
@@ -930,7 +949,7 @@ benchmarks! {
 		// SET collators as authors for blocks from now - end
 		while now < end {
 			let author = collators[counter % collators.len()].clone();
-			Pallet::<T>::note_author(author);
+			parachain_staking_on_finalize::<T>(author);
 			<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 			<frame_system::Pallet<T>>::set_block_number(
 				<frame_system::Pallet<T>>::block_number() + 1u32.into()
@@ -940,7 +959,7 @@ benchmarks! {
 			now += 1u32.into();
 			counter += 1usize;
 		}
-		Pallet::<T>::note_author(collators[counter % collators.len()].clone());
+		parachain_staking_on_finalize::<T>(collators[counter % collators.len()].clone());
 		<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 		<frame_system::Pallet<T>>::set_block_number(
 			<frame_system::Pallet<T>>::block_number() + 1u32.into()
@@ -1060,7 +1079,7 @@ benchmarks! {
 			1u32
 		)?;
 		let start = <frame_system::Pallet<T>>::block_number();
-		Pallet::<T>::note_author(collator.clone());
+		parachain_staking_on_finalize::<T>(collator.clone());
 		<frame_system::Pallet<T>>::on_finalize(start);
 		<frame_system::Pallet<T>>::set_block_number(
 			start + 1u32.into()
@@ -1086,20 +1105,6 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		TestExternalities::new(t)
-	}
-
-	#[test]
-	fn bench_hotfix_remove_delegation_requests() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Pallet::<Test>::test_benchmark_hotfix_remove_delegation_requests());
-		});
-	}
-
-	#[test]
-	fn bench_hotfix_update_candidate_pool_value() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Pallet::<Test>::test_benchmark_hotfix_update_candidate_pool_value());
-		});
 	}
 
 	#[test]
