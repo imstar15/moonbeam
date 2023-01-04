@@ -23,14 +23,14 @@ members = [
 [profile.release]
 panic = "unwind"
 
-[patch."https://github.com/mangata-finance/mangata-node"]
+[patch."https://github.com/imstar15/mangata-node"]
 pallet-xyk = { git = "https://github.com/mangata-finance//mangata-node", branch = "develop" }
 pallet-issuance = { git = "https://github.com/mangata-finance//mangata-node", branch = "develop" }
 pallet-multipurpose-liquidity = { git = "https://github.com/mangata-finance//mangata-node", branch = "develop" }
 mp-multipurpose-liquidity = { git = "https://github.com/mangata-finance//mangata-node", branch = "develop" }
 mp-traits = { git = "https://github.com/mangata-finance//mangata-node", branch = "develop" }
 
-# [patch."https://github.com/mangata-finance/mangata-node"]
+# [patch."https://github.com/imstar15/mangata-node"]
 # pallet-xyk = { path = "../mangata-node/pallets/xyk" }
 # mangata-primitives = { path = "../mangata-node/primitives/mangata" }
 # pallet-issuance = { path = "../mangata-node/pallets/issuance/" }
