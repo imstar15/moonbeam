@@ -27,18 +27,18 @@ sp-std = { git = "https://github.com/imstar15/substrate", branch = "mangata-dev"
 sp-staking = { git = "https://github.com/imstar15/substrate", branch = "mangata-dev", default-features = false }
 pallet-collective = { git = "https://github.com/imstar15/substrate", branch = "mangata-dev", default-features = false }
 
-pallet-xyk = { default-features = false, git = "https://github.com/mangata-finance/mangata-node", branch = "develop" }
+pallet-xyk = { default-features = false, git = "https://github.com/imstar15/mangata-node", branch = "debug3" }
 mangata-types = { git = "https://github.com/imstar15/substrate", branch = "mangata-dev", default-features = false }
 orml-tokens = { default-features = false, version = '0.4.1-dev', git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug3" }
-pallet-issuance = { default-features = false, git = "https://github.com/mangata-finance/mangata-node", branch = "develop" }
-mp-multipurpose-liquidity = { default-features = false, git = "https://github.com/mangata-finance/mangata-node", branch = "develop" }
-mp-traits = { default-features = false, git = "https://github.com/mangata-finance/mangata-node", branch = "develop" }
+pallet-issuance = { default-features = false, git = "https://github.com/imstar15/mangata-node", branch = "debug3" }
+mp-multipurpose-liquidity = { default-features = false, git = "https://github.com/imstar15/mangata-node", branch = "debug3" }
+mp-traits = { default-features = false, git = "https://github.com/imstar15/mangata-node", branch = "debug3" }
 
 [dev-dependencies]
 similar-asserts = "1.1.0"
 
 orml-traits = { default-features = false, version = "0.4.1-dev", git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug3" }
-#pallet-assets-info = { default-features = false, git = "https://github.com/mangata-finance/mangata-node", branch = "develop" }
+#pallet-assets-info = { default-features = false, git = "https://github.com/imstar15/mangata-node", branch = "debug3" }
 sp-core = { git = "https://github.com/imstar15/substrate", default-features = false, branch = "mangata-dev" }
 sp-io = { git = "https://github.com/imstar15/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/imstar15/substrate", default-features = false, branch = "mangata-dev" }
