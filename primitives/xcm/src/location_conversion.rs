@@ -34,11 +34,11 @@ impl<AccountId: From<[u8; 20]> + Into<[u8; 20]> + Clone> Convert<MultiLocation, 
 		let hash: [u8; 32] = ("multiloc", location.borrow())
 			.borrow()
 			.using_encoded(blake2_256);
-		log:error!("convert_ref Account20Hash, hash: {:?}", hash);
+		log::error!("convert_ref Account20Hash, hash: {:?}", hash);
 		let mut account_id = [0u8; 20];
-		log:error!("convert_ref Account20Hash, 333");
+		log::error!("convert_ref Account20Hash, 333");
 		account_id.copy_from_slice(&hash[0..20]);
-		log:error!("convert_ref Account20Hash 444");
+		log::error!("convert_ref Account20Hash 444");
 		Ok(account_id.into())
 	}
 
