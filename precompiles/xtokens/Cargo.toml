@@ -26,7 +26,7 @@ frame-system = { git = "https://github.com/imstar15/substrate", branch = "polkad
 pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
 
 # Polkadot / XCM
-orml-xtokens = { git = "https://github.com/purestake/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
+orml-xtokens = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111", default-features = false }
 xcm = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
 
 [dev-dependencies]
@@ -48,7 +48,7 @@ sp-io = { git = "https://github.com/imstar15/substrate", branch = "polkadot-v0.9
 cumulus-primitives-core = { git = "https://github.com/purestake/cumulus", branch = "moonbeam-polkadot-v0.9.29" }
 
 # Polkadot
-orml-traits = { git = "https://github.com/purestake/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.29" }
+orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111" }
 pallet-xcm = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29" }
 xcm-builder = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29" }
 xcm-executor = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29" }
