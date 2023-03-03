@@ -125,9 +125,9 @@ pallet-author-slot-filter = { git = "https://github.com/purestake/nimbus", branc
 parachain-info = { git = "https://github.com/purestake/cumulus", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
 
 # Polkadot / XCM 
-orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111", default-features = false }
-orml-xcm-support = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111", default-features = false }
-orml-xtokens = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111", default-features = false }
+orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug111", default-features = false }
+orml-xcm-support = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug111", default-features = false }
+orml-xtokens = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug111", default-features = false }
 pallet-xcm = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
 polkadot-core-primitives = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
 polkadot-parachain = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }

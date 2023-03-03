@@ -50,7 +50,7 @@ polkadot-parachain = { git = "https://github.com/purestake/polkadot", branch = "
 xcm-builder = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29" }
 
 # ORML
-orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug-111" }
+orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug111" }
 
 [features]
 default = [ "std" ]
