@@ -32,7 +32,7 @@ fp-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-pol
 pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.29", default-features = false, features = [ "forbid-evm-reentrancy" ] }
 
 # Polkadot / XCM
-xcm = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
+xcm = { git = "https://github.com/imstar15/polkadot", branch = "release-v0.9.29", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"

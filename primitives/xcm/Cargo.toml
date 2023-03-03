@@ -29,9 +29,9 @@ sp-std = { git = "https://github.com/imstar15/substrate", branch = "polkadot-v0.
 
 # Polkadot / XCM
 orml-traits = { git = "https://github.com/imstar15/open-runtime-module-library", branch = "debug111", default-features = false }
-xcm = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
-xcm-builder = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
-xcm-executor = { git = "https://github.com/purestake/polkadot", branch = "moonbeam-polkadot-v0.9.29", default-features = false }
+xcm = { git = "https://github.com/imstar15/polkadot", branch = "release-v0.9.29", default-features = false }
+xcm-builder = { git = "https://github.com/imstar15/polkadot", branch = "release-v0.9.29", default-features = false }
+xcm-executor = { git = "https://github.com/imstar15/polkadot", branch = "release-v0.9.29", default-features = false }
 
 [features]
 default = [ "std" ]
