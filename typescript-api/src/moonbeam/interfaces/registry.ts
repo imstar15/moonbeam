@@ -1,6 +1,10 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import "@polkadot/types/types/registry";
+
 import type {
   AccountEthereumSignature,
   CumulusPalletDmpQueueCall,
@@ -43,18 +47,16 @@ import type {
   EvmCoreErrorExitRevert,
   EvmCoreErrorExitSucceed,
   FpRpcTransactionStatus,
+  FrameSupportDispatchDispatchClass,
+  FrameSupportDispatchDispatchInfo,
+  FrameSupportDispatchPays,
+  FrameSupportDispatchPerDispatchClassU32,
+  FrameSupportDispatchPerDispatchClassWeight,
+  FrameSupportDispatchPerDispatchClassWeightsPerClass,
   FrameSupportDispatchRawOrigin,
   FrameSupportPalletId,
-  FrameSupportScheduleLookupError,
-  FrameSupportScheduleMaybeHashed,
+  FrameSupportPreimagesBounded,
   FrameSupportTokensMiscBalanceStatus,
-  FrameSupportWeightsDispatchClass,
-  FrameSupportWeightsDispatchInfo,
-  FrameSupportWeightsPays,
-  FrameSupportWeightsPerDispatchClassU32,
-  FrameSupportWeightsPerDispatchClassU64,
-  FrameSupportWeightsPerDispatchClassWeightsPerClass,
-  FrameSupportWeightsRuntimeDbWeight,
   FrameSystemAccountInfo,
   FrameSystemCall,
   FrameSystemError,
@@ -89,8 +91,8 @@ import type {
   PalletAssetsAssetAccount,
   PalletAssetsAssetDetails,
   PalletAssetsAssetMetadata,
+  PalletAssetsAssetStatus,
   PalletAssetsCall,
-  PalletAssetsDestroyWitness,
   PalletAssetsError,
   PalletAssetsEvent,
   PalletAssetsExistenceReason,
@@ -108,10 +110,7 @@ import type {
   PalletBalancesError,
   PalletBalancesEvent,
   PalletBalancesReasons,
-  PalletBalancesReleases,
   PalletBalancesReserveData,
-  PalletBaseFeeCall,
-  PalletBaseFeeEvent,
   PalletCollectiveCall,
   PalletCollectiveError,
   PalletCollectiveEvent,
@@ -126,10 +125,8 @@ import type {
   PalletDemocracyDelegations,
   PalletDemocracyError,
   PalletDemocracyEvent,
-  PalletDemocracyPreimageStatus,
   PalletDemocracyReferendumInfo,
   PalletDemocracyReferendumStatus,
-  PalletDemocracyReleases,
   PalletDemocracyTally,
   PalletDemocracyVoteAccountVote,
   PalletDemocracyVotePriorLock,
@@ -154,13 +151,17 @@ import type {
   PalletMaintenanceModeCall,
   PalletMaintenanceModeError,
   PalletMaintenanceModeEvent,
+  PalletMigrationsCall,
+  PalletMigrationsError,
   PalletMigrationsEvent,
   PalletMoonbeamOrbitersCall,
   PalletMoonbeamOrbitersCollatorPoolInfo,
   PalletMoonbeamOrbitersCurrentOrbiter,
   PalletMoonbeamOrbitersError,
   PalletMoonbeamOrbitersEvent,
+  PalletParachainStakingAutoCompoundAutoCompoundConfig,
   PalletParachainStakingBond,
+  PalletParachainStakingBondWithAutoCompound,
   PalletParachainStakingCall,
   PalletParachainStakingCandidateBondLessRequest,
   PalletParachainStakingCandidateMetadata,
@@ -181,6 +182,10 @@ import type {
   PalletParachainStakingParachainBondConfig,
   PalletParachainStakingRoundInfo,
   PalletParachainStakingSetOrderedSet,
+  PalletPreimageCall,
+  PalletPreimageError,
+  PalletPreimageEvent,
+  PalletPreimageRequestStatus,
   PalletProxyAnnouncement,
   PalletProxyCall,
   PalletProxyError,
@@ -194,10 +199,11 @@ import type {
   PalletRandomnessRequestInfo,
   PalletRandomnessRequestState,
   PalletRandomnessRequestType,
+  PalletRootTestingCall,
   PalletSchedulerCall,
   PalletSchedulerError,
   PalletSchedulerEvent,
-  PalletSchedulerScheduledV3,
+  PalletSchedulerScheduled,
   PalletTimestampCall,
   PalletTransactionPaymentChargeTransactionPayment,
   PalletTransactionPaymentEvent,
@@ -219,24 +225,27 @@ import type {
   PalletXcmTransactorCurrencyPayment,
   PalletXcmTransactorError,
   PalletXcmTransactorEvent,
+  PalletXcmTransactorHrmpInitParams,
+  PalletXcmTransactorHrmpOperation,
   PalletXcmTransactorRemoteTransactInfoWithMaxWeight,
   PalletXcmTransactorTransactWeights,
   PalletXcmVersionMigrationStage,
   PolkadotCorePrimitivesInboundDownwardMessage,
   PolkadotCorePrimitivesInboundHrmpMessage,
   PolkadotCorePrimitivesOutboundHrmpMessage,
+  PolkadotParachainPrimitivesHrmpChannelId,
   PolkadotParachainPrimitivesXcmpMessageFormat,
   PolkadotPrimitivesV2AbridgedHostConfiguration,
   PolkadotPrimitivesV2AbridgedHrmpChannel,
   PolkadotPrimitivesV2PersistedValidationData,
   PolkadotPrimitivesV2UpgradeRestriction,
   SessionKeysPrimitivesVrfVrfCryptoPublic,
+  SpArithmeticArithmeticError,
   SpCoreEcdsaSignature,
   SpCoreEd25519Signature,
   SpCoreSr25519Public,
   SpCoreSr25519Signature,
   SpCoreVoid,
-  SpRuntimeArithmeticError,
   SpRuntimeDigest,
   SpRuntimeDigestDigestItem,
   SpRuntimeDispatchError,
@@ -246,6 +255,8 @@ import type {
   SpRuntimeTransactionalError,
   SpTrieStorageProof,
   SpVersionRuntimeVersion,
+  SpWeightsRuntimeDbWeight,
+  SpWeightsWeightV2Weight,
   XcmDoubleEncoded,
   XcmV0Junction,
   XcmV0JunctionBodyId,
@@ -285,7 +296,7 @@ import type {
 } from "@polkadot/types/lookup";
 
 declare module "@polkadot/types/types/registry" {
-  export interface InterfaceTypes {
+  interface InterfaceTypes {
     AccountEthereumSignature: AccountEthereumSignature;
     CumulusPalletDmpQueueCall: CumulusPalletDmpQueueCall;
     CumulusPalletDmpQueueConfigData: CumulusPalletDmpQueueConfigData;
@@ -327,18 +338,16 @@ declare module "@polkadot/types/types/registry" {
     EvmCoreErrorExitRevert: EvmCoreErrorExitRevert;
     EvmCoreErrorExitSucceed: EvmCoreErrorExitSucceed;
     FpRpcTransactionStatus: FpRpcTransactionStatus;
+    FrameSupportDispatchDispatchClass: FrameSupportDispatchDispatchClass;
+    FrameSupportDispatchDispatchInfo: FrameSupportDispatchDispatchInfo;
+    FrameSupportDispatchPays: FrameSupportDispatchPays;
+    FrameSupportDispatchPerDispatchClassU32: FrameSupportDispatchPerDispatchClassU32;
+    FrameSupportDispatchPerDispatchClassWeight: FrameSupportDispatchPerDispatchClassWeight;
+    FrameSupportDispatchPerDispatchClassWeightsPerClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
     FrameSupportDispatchRawOrigin: FrameSupportDispatchRawOrigin;
     FrameSupportPalletId: FrameSupportPalletId;
-    FrameSupportScheduleLookupError: FrameSupportScheduleLookupError;
-    FrameSupportScheduleMaybeHashed: FrameSupportScheduleMaybeHashed;
+    FrameSupportPreimagesBounded: FrameSupportPreimagesBounded;
     FrameSupportTokensMiscBalanceStatus: FrameSupportTokensMiscBalanceStatus;
-    FrameSupportWeightsDispatchClass: FrameSupportWeightsDispatchClass;
-    FrameSupportWeightsDispatchInfo: FrameSupportWeightsDispatchInfo;
-    FrameSupportWeightsPays: FrameSupportWeightsPays;
-    FrameSupportWeightsPerDispatchClassU32: FrameSupportWeightsPerDispatchClassU32;
-    FrameSupportWeightsPerDispatchClassU64: FrameSupportWeightsPerDispatchClassU64;
-    FrameSupportWeightsPerDispatchClassWeightsPerClass: FrameSupportWeightsPerDispatchClassWeightsPerClass;
-    FrameSupportWeightsRuntimeDbWeight: FrameSupportWeightsRuntimeDbWeight;
     FrameSystemAccountInfo: FrameSystemAccountInfo;
     FrameSystemCall: FrameSystemCall;
     FrameSystemError: FrameSystemError;
@@ -373,8 +382,8 @@ declare module "@polkadot/types/types/registry" {
     PalletAssetsAssetAccount: PalletAssetsAssetAccount;
     PalletAssetsAssetDetails: PalletAssetsAssetDetails;
     PalletAssetsAssetMetadata: PalletAssetsAssetMetadata;
+    PalletAssetsAssetStatus: PalletAssetsAssetStatus;
     PalletAssetsCall: PalletAssetsCall;
-    PalletAssetsDestroyWitness: PalletAssetsDestroyWitness;
     PalletAssetsError: PalletAssetsError;
     PalletAssetsEvent: PalletAssetsEvent;
     PalletAssetsExistenceReason: PalletAssetsExistenceReason;
@@ -392,10 +401,7 @@ declare module "@polkadot/types/types/registry" {
     PalletBalancesError: PalletBalancesError;
     PalletBalancesEvent: PalletBalancesEvent;
     PalletBalancesReasons: PalletBalancesReasons;
-    PalletBalancesReleases: PalletBalancesReleases;
     PalletBalancesReserveData: PalletBalancesReserveData;
-    PalletBaseFeeCall: PalletBaseFeeCall;
-    PalletBaseFeeEvent: PalletBaseFeeEvent;
     PalletCollectiveCall: PalletCollectiveCall;
     PalletCollectiveError: PalletCollectiveError;
     PalletCollectiveEvent: PalletCollectiveEvent;
@@ -410,10 +416,8 @@ declare module "@polkadot/types/types/registry" {
     PalletDemocracyDelegations: PalletDemocracyDelegations;
     PalletDemocracyError: PalletDemocracyError;
     PalletDemocracyEvent: PalletDemocracyEvent;
-    PalletDemocracyPreimageStatus: PalletDemocracyPreimageStatus;
     PalletDemocracyReferendumInfo: PalletDemocracyReferendumInfo;
     PalletDemocracyReferendumStatus: PalletDemocracyReferendumStatus;
-    PalletDemocracyReleases: PalletDemocracyReleases;
     PalletDemocracyTally: PalletDemocracyTally;
     PalletDemocracyVoteAccountVote: PalletDemocracyVoteAccountVote;
     PalletDemocracyVotePriorLock: PalletDemocracyVotePriorLock;
@@ -438,13 +442,17 @@ declare module "@polkadot/types/types/registry" {
     PalletMaintenanceModeCall: PalletMaintenanceModeCall;
     PalletMaintenanceModeError: PalletMaintenanceModeError;
     PalletMaintenanceModeEvent: PalletMaintenanceModeEvent;
+    PalletMigrationsCall: PalletMigrationsCall;
+    PalletMigrationsError: PalletMigrationsError;
     PalletMigrationsEvent: PalletMigrationsEvent;
     PalletMoonbeamOrbitersCall: PalletMoonbeamOrbitersCall;
     PalletMoonbeamOrbitersCollatorPoolInfo: PalletMoonbeamOrbitersCollatorPoolInfo;
     PalletMoonbeamOrbitersCurrentOrbiter: PalletMoonbeamOrbitersCurrentOrbiter;
     PalletMoonbeamOrbitersError: PalletMoonbeamOrbitersError;
     PalletMoonbeamOrbitersEvent: PalletMoonbeamOrbitersEvent;
+    PalletParachainStakingAutoCompoundAutoCompoundConfig: PalletParachainStakingAutoCompoundAutoCompoundConfig;
     PalletParachainStakingBond: PalletParachainStakingBond;
+    PalletParachainStakingBondWithAutoCompound: PalletParachainStakingBondWithAutoCompound;
     PalletParachainStakingCall: PalletParachainStakingCall;
     PalletParachainStakingCandidateBondLessRequest: PalletParachainStakingCandidateBondLessRequest;
     PalletParachainStakingCandidateMetadata: PalletParachainStakingCandidateMetadata;
@@ -465,6 +473,10 @@ declare module "@polkadot/types/types/registry" {
     PalletParachainStakingParachainBondConfig: PalletParachainStakingParachainBondConfig;
     PalletParachainStakingRoundInfo: PalletParachainStakingRoundInfo;
     PalletParachainStakingSetOrderedSet: PalletParachainStakingSetOrderedSet;
+    PalletPreimageCall: PalletPreimageCall;
+    PalletPreimageError: PalletPreimageError;
+    PalletPreimageEvent: PalletPreimageEvent;
+    PalletPreimageRequestStatus: PalletPreimageRequestStatus;
     PalletProxyAnnouncement: PalletProxyAnnouncement;
     PalletProxyCall: PalletProxyCall;
     PalletProxyError: PalletProxyError;
@@ -478,10 +490,11 @@ declare module "@polkadot/types/types/registry" {
     PalletRandomnessRequestInfo: PalletRandomnessRequestInfo;
     PalletRandomnessRequestState: PalletRandomnessRequestState;
     PalletRandomnessRequestType: PalletRandomnessRequestType;
+    PalletRootTestingCall: PalletRootTestingCall;
     PalletSchedulerCall: PalletSchedulerCall;
     PalletSchedulerError: PalletSchedulerError;
     PalletSchedulerEvent: PalletSchedulerEvent;
-    PalletSchedulerScheduledV3: PalletSchedulerScheduledV3;
+    PalletSchedulerScheduled: PalletSchedulerScheduled;
     PalletTimestampCall: PalletTimestampCall;
     PalletTransactionPaymentChargeTransactionPayment: PalletTransactionPaymentChargeTransactionPayment;
     PalletTransactionPaymentEvent: PalletTransactionPaymentEvent;
@@ -503,24 +516,27 @@ declare module "@polkadot/types/types/registry" {
     PalletXcmTransactorCurrencyPayment: PalletXcmTransactorCurrencyPayment;
     PalletXcmTransactorError: PalletXcmTransactorError;
     PalletXcmTransactorEvent: PalletXcmTransactorEvent;
+    PalletXcmTransactorHrmpInitParams: PalletXcmTransactorHrmpInitParams;
+    PalletXcmTransactorHrmpOperation: PalletXcmTransactorHrmpOperation;
     PalletXcmTransactorRemoteTransactInfoWithMaxWeight: PalletXcmTransactorRemoteTransactInfoWithMaxWeight;
     PalletXcmTransactorTransactWeights: PalletXcmTransactorTransactWeights;
     PalletXcmVersionMigrationStage: PalletXcmVersionMigrationStage;
     PolkadotCorePrimitivesInboundDownwardMessage: PolkadotCorePrimitivesInboundDownwardMessage;
     PolkadotCorePrimitivesInboundHrmpMessage: PolkadotCorePrimitivesInboundHrmpMessage;
     PolkadotCorePrimitivesOutboundHrmpMessage: PolkadotCorePrimitivesOutboundHrmpMessage;
+    PolkadotParachainPrimitivesHrmpChannelId: PolkadotParachainPrimitivesHrmpChannelId;
     PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
     PolkadotPrimitivesV2AbridgedHostConfiguration: PolkadotPrimitivesV2AbridgedHostConfiguration;
     PolkadotPrimitivesV2AbridgedHrmpChannel: PolkadotPrimitivesV2AbridgedHrmpChannel;
     PolkadotPrimitivesV2PersistedValidationData: PolkadotPrimitivesV2PersistedValidationData;
     PolkadotPrimitivesV2UpgradeRestriction: PolkadotPrimitivesV2UpgradeRestriction;
     SessionKeysPrimitivesVrfVrfCryptoPublic: SessionKeysPrimitivesVrfVrfCryptoPublic;
+    SpArithmeticArithmeticError: SpArithmeticArithmeticError;
     SpCoreEcdsaSignature: SpCoreEcdsaSignature;
     SpCoreEd25519Signature: SpCoreEd25519Signature;
     SpCoreSr25519Public: SpCoreSr25519Public;
     SpCoreSr25519Signature: SpCoreSr25519Signature;
     SpCoreVoid: SpCoreVoid;
-    SpRuntimeArithmeticError: SpRuntimeArithmeticError;
     SpRuntimeDigest: SpRuntimeDigest;
     SpRuntimeDigestDigestItem: SpRuntimeDigestDigestItem;
     SpRuntimeDispatchError: SpRuntimeDispatchError;
@@ -530,6 +546,8 @@ declare module "@polkadot/types/types/registry" {
     SpRuntimeTransactionalError: SpRuntimeTransactionalError;
     SpTrieStorageProof: SpTrieStorageProof;
     SpVersionRuntimeVersion: SpVersionRuntimeVersion;
+    SpWeightsRuntimeDbWeight: SpWeightsRuntimeDbWeight;
+    SpWeightsWeightV2Weight: SpWeightsWeightV2Weight;
     XcmDoubleEncoded: XcmDoubleEncoded;
     XcmV0Junction: XcmV0Junction;
     XcmV0JunctionBodyId: XcmV0JunctionBodyId;
