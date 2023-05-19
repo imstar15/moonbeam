@@ -2013,12 +2013,12 @@ pub mod pallet {
 			delegator: &T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			Pallet::<T>::join_candidates(
-				T::Origin::from(Some(collator.clone()).into()),
+				T::RuntimeOrigin::from(Some(collator.clone()).into()),
 				T::MinCandidateStk::get(),
 				<CandidatePool<T>>::get().0.len() as u32,
 			)?;
 			Pallet::<T>::delegate(
-				T::Origin::from(Some(delegator.clone()).into()),
+				T::RuntimeOrigin::from(Some(delegator.clone()).into()),
 				collator.clone(),
 				T::MinDelegatorStk::get(),
 				0,
