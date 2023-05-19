@@ -16,7 +16,7 @@
 
 //! traits for parachain-staking
 
-use frame_support::pallet_prelude::Weight;
+use frame_support::pallet_prelude::{DispatchResultWithPostInfo, Weight};
 
 pub trait OnCollatorPayout<AccountId, Balance> {
 	fn on_collator_payout(
