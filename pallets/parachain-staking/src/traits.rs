@@ -78,6 +78,7 @@ pub trait DelegatorActions<AccountId, Balance> {
 		minimum: Balance,
 	) -> Result<Balance, DispatchErrorWithPostInfo>;
 	fn get_bond_balance(delegator: &AccountId, candidate: &AccountId) -> Result<Balance, sp_runtime::DispatchError>;
+	// fn is_delegator_balance_sufficient(delegator: &AccountId, candidate: &AccountId, minimum: Balance) -> bool;
 	#[cfg(feature = "runtime-benchmarks")]
 	fn setup_delegator(collator: &AccountId, delegator: &AccountId) -> DispatchResultWithPostInfo;
 }
