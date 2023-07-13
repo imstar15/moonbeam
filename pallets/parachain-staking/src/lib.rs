@@ -2007,6 +2007,19 @@ pub mod pallet {
 				})
 		}
 
+		fn get_bond_balance(delegator: &T::AccountId, candidate: &T::AccountId) -> Result<BalanceOf<T>, sp_runtime::DispatchError> {
+			match <DelegatorState<T>>::get(delegator) {
+				Some(state) => {
+					state.delegations.0
+						.iter()
+						.find(|bond| bond.owner == candidate.clone())
+						.map(|bond| bond.amount)
+						.ok_or(Error::<T>::DelegatorDNE.into())
+				},
+				None => Err(Error::<T>::DelegatorDNE.into()),
+			}
+		}
+
 		#[cfg(feature = "runtime-benchmarks")]
 		fn setup_delegator(
 			collator: &T::AccountId,
