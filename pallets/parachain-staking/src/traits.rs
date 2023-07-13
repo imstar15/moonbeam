@@ -73,7 +73,7 @@ pub trait DelegatorActions<AccountId, Balance> {
 		more: Balance,
 	) -> Result<bool, sp_runtime::DispatchError>;
 	fn get_bond_balance(delegator: &AccountId, candidate: &AccountId) -> Result<Balance, sp_runtime::DispatchError>;
-	fn get_delegator_stakable_free_balance(delegator: &AccountId, minimum: Balance) -> Result<Balance, DispatchErrorWithPostInfo>;
+	fn get_delegator_stakable_free_balance(delegator: &AccountId) -> Balance;
 	#[cfg(feature = "runtime-benchmarks")]
 	fn setup_delegator(collator: &AccountId, delegator: &AccountId) -> DispatchResultWithPostInfo;
 }

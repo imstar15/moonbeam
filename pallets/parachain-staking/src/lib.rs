@@ -1991,14 +1991,8 @@ pub mod pallet {
 			state.increase_delegation::<T>(candidate.clone(), more)
 		}
 
-		fn get_delegator_stakable_free_balance(
-			delegator: &T::AccountId,
-			minimum: BalanceOf<T>,
-		) -> Result<BalanceOf<T>, DispatchErrorWithPostInfo> {
+		fn get_delegator_stakable_free_balance(delegator: &T::AccountId) -> BalanceOf<T> {
 			Self::get_delegator_stakable_free_balance(delegator)
-				.checked_sub(&minimum)
-				.ok_or(Error::<T>::InsufficientBalance.into())
-				.and_then(|delegation| Ok(delegation) )
 		}
 
 		fn get_bond_balance(delegator: &T::AccountId, candidate: &T::AccountId) -> Result<BalanceOf<T>, sp_runtime::DispatchError> {
