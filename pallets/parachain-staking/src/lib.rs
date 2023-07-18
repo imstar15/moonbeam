@@ -82,7 +82,6 @@ pub mod pallet {
 	};
 	use crate::{set::OrderedSet, traits::*, types::*, InflationInfo, Range, WeightInfo};
 	use crate::{AutoCompoundConfig, AutoCompoundDelegations};
-	use frame_support::dispatch::DispatchErrorWithPostInfo;
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{
 		tokens::WithdrawReasons, Currency, Get, Imbalance, LockIdentifier, LockableCurrency,
@@ -90,7 +89,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::{
-		traits::{CheckedSub, Saturating, Zero},
+		traits::{Saturating, Zero},
 		Perbill, Percent, Permill,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, prelude::*};
@@ -1991,20 +1990,14 @@ pub mod pallet {
 			state.increase_delegation::<T>(candidate.clone(), more)
 		}
 
-		fn delegator_bond_till_minimum(
-			delegator: &T::AccountId,
-			candidate: &T::AccountId,
-			minimum: BalanceOf<T>,
-		) -> Result<BalanceOf<T>, DispatchErrorWithPostInfo> {
+		fn is_delegation_exist(delegator: &T::AccountId, candidate: &T::AccountId) -> bool {
+			<DelegatorState<T>>::get(delegator)
+				.map(|state| state.get_bond_amount(candidate).is_some())
+				.unwrap_or(false)
+		}
+
+		fn get_delegator_stakable_free_balance(delegator: &T::AccountId) -> BalanceOf<T> {
 			Self::get_delegator_stakable_free_balance(delegator)
-				.checked_sub(&minimum)
-				.ok_or(Error::<T>::InsufficientBalance.into())
-				.and_then(|delegation| {
-					<Self as DelegatorActions<T::AccountId, BalanceOf<T>>>::delegator_bond_more(
-						delegator, candidate, delegation,
-					)?;
-					Ok(delegation)
-				})
 		}
 
 		#[cfg(feature = "runtime-benchmarks")]
