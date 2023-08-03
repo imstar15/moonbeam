@@ -1339,8 +1339,10 @@ pub mod pallet {
 			more: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
-			let in_top = <Self as DelegatorActions<T::AccountId, BalanceOf<T>>>::delegator_bond_more(
-				&delegator, &candidate, more,
+			let in_top = Self::delegation_bond_more_without_event(
+				delegator.clone(),
+				candidate.clone(),
+				more.clone(),
 			)?;
 			Pallet::<T>::deposit_event(Event::DelegationIncreased {
 				delegator,
@@ -1982,18 +1984,19 @@ pub mod pallet {
 			candidate: &T::AccountId,
 			more: BalanceOf<T>,
 		) -> Result<bool, sp_runtime::DispatchError> {
-			ensure!(
-				!Self::delegation_request_revoke_exists(candidate, delegator),
-				Error::<T>::PendingDelegationRevoke
-			);
-			let mut state = <DelegatorState<T>>::get(delegator).ok_or(Error::<T>::DelegatorDNE)?;
-			state.increase_delegation::<T>(candidate.clone(), more)
-		}
+			let in_top = Self::delegation_bond_more_without_event(
+				delegator.clone(),
+				candidate.clone(),
+				more.clone(),
+			)?;
+			Pallet::<T>::deposit_event(Event::DelegationIncreased {
+				delegator: delegator.clone(),
+				candidate: candidate.clone(),
+				amount: more,
+				in_top,
+			});
 
-		fn is_delegation_exist(delegator: &T::AccountId, candidate: &T::AccountId) -> bool {
-			<DelegatorState<T>>::get(delegator)
-				.map(|state| state.get_bond_amount(candidate).is_some())
-				.unwrap_or(false)
+			Ok(in_top)
 		}
 
 		fn get_delegator_stakable_free_balance(delegator: &T::AccountId) -> BalanceOf<T> {

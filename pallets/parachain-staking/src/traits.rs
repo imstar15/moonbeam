@@ -71,7 +71,6 @@ pub trait DelegatorActions<AccountId, Balance> {
 		candidate: &AccountId,
 		more: Balance,
 	) -> Result<bool, sp_runtime::DispatchError>;
-	fn is_delegation_exist(delegator: &AccountId, candidate: &AccountId) -> bool;
 	fn get_delegator_stakable_free_balance(delegator: &AccountId) -> Balance;
 	#[cfg(feature = "runtime-benchmarks")]
 	fn setup_delegator(collator: &AccountId, delegator: &AccountId) -> frame_support::pallet_prelude::DispatchResultWithPostInfo;
